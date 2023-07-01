@@ -1,6 +1,8 @@
 const express = require("express")
 const app = express()
 const mongoose = require("mongoose")
+const bcrypt = require("bcryptjs")
+// require("../app")
 const newUser = new mongoose.Schema({
     Username: {
         type: String,
@@ -8,11 +10,11 @@ const newUser = new mongoose.Schema({
         unique: true
     },
     Password: {
-        type: [String, Number],
+        type: String,
         required: true
     },
     Confirm_Password: {
-        type: [String, Number],
+        type: String,
         required: true
     },
     Phone_Number: {
@@ -34,5 +36,21 @@ const newUser = new mongoose.Schema({
         type: String
     }
 })
-const LoginCollection = new mongoose.model("LoginCollection",newUser);
+newUser.pre("save", async function (next) {
+    try {
+        if (this.isModified("Password")) {
+            this.Password = await bcrypt.hash(this.Password, 10);
+        }
+        if (this.isModified("Confirm_Password")) {
+            this.Confirm_Password = await bcrypt.hash(this.Confirm_Password, 10);
+        }
+        next();
+    }
+    catch (error) {
+        console.log(error);
+    }
+})
+
+const LoginCollection = new mongoose.model("LoginCollection", newUser);
 module.exports = LoginCollection
+
